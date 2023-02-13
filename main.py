@@ -16,6 +16,7 @@ if __name__ == '__main__':
     data = DataLoader('F-MNIST')
     util = Utility()
     net = Net()
+    sys.argv.append('F-MNIST binary')
 
     if sys.argv[1] == 'F-MNIST':
         Trainer(model=net, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(30, isBinary=False)
@@ -28,6 +29,8 @@ if __name__ == '__main__':
         print('binary')
         bFmnist = FMNIST_binary(data, util)
         bnet = bFmnist.load_trained_model()
+        util.store_parmeters(bnet,'Task2_BP.txt')
+        util.store_parmeters(bnet.pretrained, 'Task1_BP.txt')
 
         n = np.zeros(shape=(1, 1, 32, 32), dtype=np.float32)
         print(summary(bnet.pretrained, torch.tensor(n)))
@@ -64,3 +67,6 @@ if __name__ == '__main__':
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet)))
         Tester(model=bnet.pretrained, test_loader=data.test_loader, batch_size=data.batch_size).test_model(False)
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet.pretrained)))
+
+        util.store_parmeters(bnet, 'Task2_AP.txt')
+        util.store_parmeters(bnet.pretrained, 'Task1_AP.txt')

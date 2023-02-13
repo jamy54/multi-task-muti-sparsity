@@ -65,3 +65,18 @@ class Utility:
             if param is not None:
                 zeros += param.numel() - param.nonzero(as_tuple=False).size(0)
         return zeros
+
+    def store_parmeters(self,model, filename):
+        file = open("weight/"+filename, 'w')
+        for param in model.named_parameters():
+            items = param[1].flatten().tolist()
+            data = []
+
+            for item in items:
+                data.append(item)
+            file.write(str(data) + "\n")
+
+        file.close()
+
+        #print(data)
+

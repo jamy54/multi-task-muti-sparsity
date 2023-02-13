@@ -29,6 +29,9 @@ class Trainer:
                         target[k] = 1 if (label in [5, 7, 8, 9]) else 0
                 loss = self.criterion(output, target)
                 loss.backward()
+                for p in self.model.parameters():
+                    print(p.grad)
+
                 self.optimizer.step()
                 train_loss += loss.item() * data.size(0)
 
