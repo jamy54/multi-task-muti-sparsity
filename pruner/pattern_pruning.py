@@ -5,38 +5,50 @@ import numpy as np
 
 class PatternPruner:
     def __init__(self):
-        pattern1 = [[0, 0], [0, 2], [2, 0], [2, 2]]
-        pattern2 = [[0, 0], [0, 1], [2, 1], [2, 2]]
-        pattern3 = [[0, 0], [0, 1], [2, 0], [2, 1]]
-        pattern4 = [[0, 0], [0, 1], [1, 0], [1, 1]]
-        pattern5 = [[0, 2], [1, 0], [1, 2], [2, 0]]
-        pattern6 = [[0, 0], [1, 0], [1, 2], [2, 2]]
-        pattern7 = [[0, 1], [0, 2], [2, 0], [2, 1]]
-        pattern8 = [[0, 1], [0, 2], [2, 1], [2, 2]]
+        low_sparsity_set = {'conv':[[[0, 0], [0, 2], [2, 0], [2, 2]],
+                                [[0, 0], [0, 1], [2, 1], [2, 2]],
+                                [[0, 0], [0, 1], [2, 0], [2, 1]]],
+                            'fc': [[[0, 0], [0, 2], [0, 3], [1, 0], [1, 1], [1, 3], [2, 0], [2, 2], [3, 0],[4, 0]],
+                                [[0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 3], [2, 0], [2, 1], [3, 3],[4, 1]],
+                                [[0, 2], [0, 3], [1, 0], [1, 1], [1, 3], [2, 0], [2, 1], [2, 3], [3, 2],[4, 3]]]
+                            }
 
-        pattern9 = [[1, 0], [1, 2], [2, 0], [2, 2]]
-        pattern10 = [[0, 0], [0, 2], [1, 0], [1, 2]]
-        pattern11 = [[1, 1], [1, 2], [2, 1], [2, 2]]
-        pattern12 = [[1, 0], [1, 1], [2, 0], [2, 1]]
-        pattern13 = [[0, 1], [0, 2], [1, 1], [1, 2]]
+        high_sparsity_set = {'conv':[[[0, 0], [0, 2], [2, 0], [2, 2],[1, 1]],
+                                    [[0, 0], [0, 1], [2, 1], [2, 2],[1, 1]],
+                                    [[0, 0], [0, 1], [2, 0], [2, 1],[1, 1]]],
+                            'fc': [[[0, 0], [0, 2], [0, 3], [1, 0], [1, 1], [1, 3], [2, 0], [2, 2], [3, 0],[4, 0],[4, 3]],
+                                    [[0, 0], [0, 2], [0, 3], [1, 0], [1, 1], [1, 3], [2, 0], [2, 3], [3, 3],[4, 0],[4, 1]],
+                                    [[0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 3], [2, 0], [2, 1], [3, 3],[4, 2],[4, 3]]]
+                            }
 
-        self.patterns_dict = {1: pattern1,
-                              2: pattern2,
-                              3: pattern3,
-                              4: pattern4,
-                              5: pattern5,
-                              6: pattern6,
-                              7: pattern7,
-                              8: pattern8,
-                              9: pattern9,
-                              10: pattern10,
-                              11: pattern11,
-                              12: pattern12,
-                              13: pattern13}
+        self.patterns_dict = [
+                                {
+                                    1: low_sparsity_set['conv'][0],
+                                    2: low_sparsity_set['conv'][1],
+                                    3: low_sparsity_set['conv'][2]
+                                },
+                                {
+                                    1: high_sparsity_set['conv'][0],
+                                    2: high_sparsity_set['conv'][1],
+                                    3: high_sparsity_set['conv'][2]
+                                },
+                              ]
+        self.patterns_dict_fc = [
+            {
+                1: low_sparsity_set['fc'][0],
+                2: low_sparsity_set['fc'][1],
+                3: low_sparsity_set['fc'][2]
+            },
+            {
+                1: high_sparsity_set['fc'][0],
+                2: high_sparsity_set['fc'][1],
+                3: high_sparsity_set['fc'][2]
+            },
+        ]
 
         self.selected_pattern_dict = {}
 
-    def create_mask(self, weight):
+    def create_mask(self, weight, mode):
         print("pattern pruning...")
         masks = torch.ones_like(weight)
         shape = weight.shape
@@ -46,7 +58,7 @@ class PatternPruner:
                 for j in range(shape[1]):
                     current_kernel = weight[i, j]
                     temp_dict = {}  # store each pattern's norm value on the same weight kernel
-                    for key, pattern in self.patterns_dict.items():
+                    for key, pattern in self.patterns_dict[mode].items():
                         temp_kernel = current_kernel.clone()
                         #print(temp_kernel.shape)
                         for index in pattern:
@@ -60,7 +72,7 @@ class PatternPruner:
                     else:
                         self.selected_pattern_dict[best_pattern] += 1
 
-                    for index in self.patterns_dict[best_pattern]:
+                    for index in self.patterns_dict[mode][best_pattern]:
                         masks[i, j, index[0], index[1]] = 0
 
         elif len(shape) == 2:
@@ -71,7 +83,7 @@ class PatternPruner:
             for i in range(temp_shape[0]):
                 current_kernel = temp_weight[i]
                 temp_dict = {}  # store each pattern's norm value on the same weight kernel
-                for key, pattern in self.patterns_dict.items():
+                for key, pattern in self.patterns_dict_fc[mode].items():
                     temp_kernel = current_kernel.clone()
                     # print(temp_kernel.shape)
                     for index in pattern:
@@ -86,7 +98,7 @@ class PatternPruner:
                 else:
                     self.selected_pattern_dict[best_pattern] += 1
 
-                for index in self.patterns_dict[best_pattern]:
+                for index in self.patterns_dict_fc[mode][best_pattern]:
                     masks[i, index[0], index[1]] = 0
             masks = masks.reshape(shape[0],shape[1])
 

@@ -12,7 +12,7 @@ class Trainer:
         self.train_loader = train_loader
         self.valid_loader = valid_loader
 
-    def train_model(self, ep, isBinary=True, callbacks = None):
+    def train_model(self, ep, isBinary=True, callbacks = None, freezeParam=None):
         train_losslist = []
         valid_loss_min = np.Inf  # track change in validation loss
 
@@ -29,8 +29,11 @@ class Trainer:
                         target[k] = 1 if (label in [5, 7, 8, 9]) else 0
                 loss = self.criterion(output, target)
                 loss.backward()
-                #for p in self.model.parameters():
-                #    print(p.grad)
+
+                if freezeParam is not None:
+                    for name, param in self.model.named_parameters():
+                        if param.dim() >= 2:
+                            param.grad *= freezeParam[name]
 
                 self.optimizer.step()
                 train_loss += loss.item() * data.size(0)

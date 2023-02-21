@@ -68,13 +68,29 @@ class Utility:
 
     def store_parmeters(self,model, filename):
         file = open("weight/"+filename, 'w')
-        for param in model.named_parameters():
+        data =""
+        for param in model.parameters():
             items = param[1].flatten().tolist()
-            data = []
+            if param.dim() == 4:
+                for para in param:
+                    for par in para:
+                        for pa in par:
+                            for p in pa:
+                                data += str(round(float(p),4)) + ", "
+                            data += "\n"
+                        data += "\n"
+                    data += "\n"
 
-            for item in items:
-                data.append(item)
-            file.write(str(data) + "\n")
+            elif param.dim() == 2:
+                for para in param:
+                    for par in para:
+                        data += str(round(float(par),4)) + ", "
+                    data += "\n"
+            elif param.dim() == 1:
+                for para in param:
+                    data += str(round(float(para),4)) + ", "
+
+        file.write(str(data) + "\n")
 
         file.close()
 

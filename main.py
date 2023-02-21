@@ -9,7 +9,12 @@ import torch
 from pytorch_model_summary import summary
 import numpy as np
 
-
+def combinedMask(lMask,hMask):
+    mask={}
+    for name in hMask:
+        mask[name] =hMask[name] * lMask[name]
+        mask[name] = mask[name].sub(1).mul(-1)
+    return  mask
 
 if __name__ == '__main__':
     print(sys.version)
@@ -45,7 +50,7 @@ if __name__ == '__main__':
         Tester(model=bnet.pretrained, test_loader=data.test_loader, batch_size=data.batch_size).test_model(False)
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet.pretrained)))
 
-        pruner = Pruner(bnet.pretrained)
+        hpruner = Pruner(bnet.pretrained,'high')
 
         print('Accuracy After pruning')
         print('_' * 30)
@@ -60,7 +65,7 @@ if __name__ == '__main__':
         print('FineTuning the model')
         print('_' * 30)
 
-        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(10, isBinary=False, callbacks = [lambda: pruner.apply(bnet.pretrained)])
+        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(1, isBinary=False, callbacks = [lambda: hpruner.apply(bnet.pretrained)])
 
 
         Tester(model=bnet, test_loader=data.test_loader, batch_size=data.batch_size).test_model()
@@ -68,5 +73,18 @@ if __name__ == '__main__':
         Tester(model=bnet.pretrained, test_loader=data.test_loader, batch_size=data.batch_size).test_model(False)
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet.pretrained)))
 
-        util.store_parmeters(bnet, 'Task2_AP.txt')
-        util.store_parmeters(bnet.pretrained, 'Task1_AP.txt')
+        util.store_parmeters(bnet, 'bTask_After_Pruning_high.txt')
+        util.store_parmeters(bnet.pretrained, 'Task_After_Pruning_high.txt')
+
+        lpruner = Pruner(bnet.pretrained, 'low')
+
+        cMask = combinedMask(lpruner.masks, hpruner.masks)
+        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(4, isBinary=False, callbacks = [lambda: lpruner.apply(bnet.pretrained)], freezeParam = cMask)
+
+        util.store_parmeters(bnet, 'bTask_After_Pruning_low.txt')
+        util.store_parmeters(bnet.pretrained, 'Task_After_Pruning_low.txt')
+
+        Tester(model=bnet, test_loader=data.test_loader, batch_size=data.batch_size).test_model()
+        print("Number of Zero Weights: " + str(util.countZeroWeights(bnet)))
+        Tester(model=bnet.pretrained, test_loader=data.test_loader, batch_size=data.batch_size).test_model(False)
+        print("Number of Zero Weights: " + str(util.countZeroWeights(bnet.pretrained)))

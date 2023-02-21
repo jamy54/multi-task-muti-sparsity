@@ -37,15 +37,20 @@ class Tester():
                 class_correct[label] += correct[i].item()
                 class_total[label] += 1
 
-        if not isBinary:
-            for i in range(10):
-                if class_total[i] > 0:
-                    print('Test Accuracy of %5s: %2d%% (%2d/%2d)' % (
-                        self.classes[i], 100 * class_correct[i] / class_total[i],
-                        np.sum(class_correct[i]), np.sum(class_total[i])))
-                else:
-                    print('Test Accuracy of %5s: N/A (no training examples)' % (self.classes[i]))
+        #if not isBinary:
+            #for i in range(10):
+                #if class_total[i] > 0:
+                    #print('Test Accuracy of %5s: %2d%% (%2d/%2d)' % (
+                    #    self.classes[i], 100 * class_correct[i] / class_total[i],
+                    #    np.sum(class_correct[i]), np.sum(class_total[i])))
+               # else:
+                    #print('Test Accuracy of %5s: N/A (no training examples)' % (self.classes[i]))
 
-        print('\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (
+        if not isBinary:
+            print('\nTest Accuracy: %2d%% (%2d/%2d)' % (
             100. * np.sum(class_correct) / np.sum(class_total),
             np.sum(class_correct), np.sum(class_total)))
+        else:
+            print('\nTest Accuracy (binary): %2d%% (%2d/%2d)' % (
+                100. * np.sum(class_correct) / np.sum(class_total),
+                np.sum(class_correct), np.sum(class_total)))
