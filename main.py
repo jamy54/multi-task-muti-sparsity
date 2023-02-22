@@ -45,27 +45,22 @@ if __name__ == '__main__':
         Tester(model=bnet, test_loader=data.test_loader, batch_size=data.batch_size).test_model()
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet)))
 
-        print('Accuracy Before pruning (base model)')
-        print('_' * 30)
         Tester(model=bnet.pretrained, test_loader=data.test_loader, batch_size=data.batch_size).test_model(False)
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet.pretrained)))
 
         hpruner = Pruner(bnet.pretrained,'high')
 
-        print('Accuracy After pruning')
-        print('_' * 30)
         Tester(model=bnet, test_loader=data.test_loader, batch_size=data.batch_size).test_model()
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet)))
 
-        print('Accuracy After pruning (base model)')
-        print('_' * 30)
+
         Tester(model=bnet.pretrained, test_loader=data.test_loader, batch_size=data.batch_size).test_model(False)
         print("Number of Zero Weights: " + str(util.countZeroWeights(bnet.pretrained)))
 
         print('FineTuning the model')
         print('_' * 30)
 
-        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(1, isBinary=False, callbacks = [lambda: hpruner.apply(bnet.pretrained)])
+        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(10, isBinary=False, callbacks = [lambda: hpruner.apply(bnet.pretrained)])
 
 
         Tester(model=bnet, test_loader=data.test_loader, batch_size=data.batch_size).test_model()
@@ -79,7 +74,7 @@ if __name__ == '__main__':
         lpruner = Pruner(bnet.pretrained, 'low')
 
         cMask = combinedMask(lpruner.masks, hpruner.masks)
-        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(4, isBinary=False, callbacks = [lambda: lpruner.apply(bnet.pretrained)], freezeParam = cMask)
+        Trainer(model=bnet.pretrained, train_loader=data.train_loader, valid_loader=data.valid_loader).train_model(100, isBinary=False, callbacks = [lambda: lpruner.apply(bnet.pretrained)], freezeParam = cMask)
 
         util.store_parmeters(bnet, 'bTask_After_Pruning_low.txt')
         util.store_parmeters(bnet.pretrained, 'Task_After_Pruning_low.txt')

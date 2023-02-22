@@ -76,19 +76,26 @@ class Utility:
                     for par in para:
                         for pa in par:
                             for p in pa:
+                                if p == 0 or p == -0:
+                                    p = 0
                                 data += str(round(float(p),4)) + ", "
                             data += "\n"
                         data += "\n"
                     data += "\n"
+                data += "\n"
 
             elif param.dim() == 2:
                 for para in param:
                     for par in para:
+                        if par == 0 or par == -0:
+                            par = 0
                         data += str(round(float(par),4)) + ", "
                     data += "\n"
+                data += "\n"
             elif param.dim() == 1:
                 for para in param:
                     data += str(round(float(para),4)) + ", "
+                data += "\n"
 
         file.write(str(data) + "\n")
 
