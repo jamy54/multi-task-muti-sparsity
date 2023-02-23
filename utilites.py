@@ -66,6 +66,13 @@ class Utility:
                 zeros += param.numel() - param.nonzero(as_tuple=False).size(0)
         return zeros
 
+    def get_freeze_param_by_combinedMask(self, lMask, hMask):
+        mask = {}
+        for name in hMask:
+            mask[name] = hMask[name] * lMask[name]
+            mask[name] = mask[name].sub(1).mul(-1)
+        return mask
+
     def store_parmeters(self,model, filename):
         file = open("weight/"+filename, 'w')
         data =""
